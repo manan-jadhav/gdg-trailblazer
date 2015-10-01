@@ -9,7 +9,12 @@
   "author": "Manan Jadhav",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.14.1",
     "express": "^4.13.3",
-    "mongoose": "^4.1.9"
+    "moment": "^2.10.6",
+    "moment-timezone": "^0.4.0",
+    "mongoose": "^4.1.9",
+    "mongoose-unique-validator": "^0.4.1",
+    "mongoose-validators": "^0.1.0"
   }
 }
