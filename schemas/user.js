@@ -43,9 +43,12 @@ var userSchema = new mongoose.Schema({
     type:Date,
     default:Date.now
   },
+  email_verification_code:{
+    type:String,
+    required:true
+  },
   email_verified_at:{ // The time at which email was verified
     type:Date,
-    required:true,
     default:null
   },
   timezone: { // Timezone of the user, to provide correct time representation
