@@ -19,6 +19,19 @@ router.get('/',function(request,response){
   });
 });
 
+router.get('/:user_id',function(request,response){
+  User.findById(request.params.user_id,{
+    __v:false,
+    email_verified_at:false,
+    password:false
+  },function(err,user){
+    if(err)
+      response.status(400).json(H.response(400,"Error while fetching users.",null,err));
+    else
+      response.status(200).json(H.response(200,"Success.",user));
+  });
+});
+
 router.post('/',function(request,response){
     var data = request.body;
     var user = new User({
