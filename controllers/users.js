@@ -1,6 +1,7 @@
 var express = require('express');
 var moment = require('moment-timezone');
 var crypto = require('crypto');
+var bcrypt = require('bcryptjs');
 var router = express.Router();
 
 var config  = require('../config');
@@ -16,6 +17,7 @@ router.get('/',function(request,response){
   User.find({},{
     __v:false,
     email_verified_at:false,
+    email_verification_code:false,
     password:false
   },function(err,users){
     if(err)
@@ -29,6 +31,7 @@ router.get('/:user_id',function(request,response){
   User.findById(request.params.user_id,{
     __v:false,
     email_verified_at:false,
+    email_verification_code:false,
     password:false
   },function(err,user){
     if(err)
@@ -61,7 +64,8 @@ router.post('/',function(request,response){
     }
     if( ! (data.password && data.password.length > 5) )
       errors.push({field:'password',message:'Password must be larger than 5 characters.'});
-
+    else
+      user.password = bcrypt.hashSync(data.password,8);
     if(errors.length > 0)
       response.status(422).json(H.response(422,"Invalid data.",null,errors));
     else
