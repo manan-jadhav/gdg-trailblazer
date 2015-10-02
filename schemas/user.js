@@ -37,11 +37,19 @@ var userSchema = new mongoose.Schema({
   },
   created_at : {
     type:Date,
-    default:Date.now
+    default:Date.now,
+    get:function(date)
+    {
+      return moment(date).format();
+    }
   },
   updated_at : {
     type:Date,
-    default:Date.now
+    default:Date.now,
+    get:function(date)
+    {
+      return moment(date).format();
+    }
   },
   email_verification_code:{
     type:String,
@@ -49,7 +57,12 @@ var userSchema = new mongoose.Schema({
   },
   email_verified_at:{ // The time at which email was verified
     type:Date,
-    default:null
+    default:null,
+    get:function(date)
+    {
+      if(date)
+        return moment(date).format();
+    }
   },
   timezone: { // Timezone of the user, to provide correct time representation
     type:String,
@@ -59,9 +72,8 @@ var userSchema = new mongoose.Schema({
 });
 userSchema.plugin(uniqueValidator, { message: 'Error, this {PATH} already exists.' });
 
-userSchema.methods.name = function(){
-  return this.first_name + " " + this.last_name;
-}
+userSchema.set('toJSON', { virtuals: true, getters:true });
+userSchema.set('toObject', { virtuals: true, getters:true });
 
 userSchema.statics.userUpdatables = ['first_name','last_name','city','technologies','mobile','timezone'];
 
