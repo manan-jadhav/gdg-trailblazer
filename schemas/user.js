@@ -43,6 +43,11 @@ var userSchema = new mongoose.Schema({
     type:Date,
     default:Date.now
   },
+  email_verified_at:{ // The time at which email was verified
+    type:Date,
+    required:true,
+    default:null
+  },
   timezone: { // Timezone of the user, to provide correct time representation
     type:String,
     default: appConfig.timezone,
@@ -54,5 +59,7 @@ userSchema.plugin(uniqueValidator, { message: 'Error, this {PATH} already exists
 userSchema.methods.name = function(){
   return this.first_name + " " + this.last_name;
 }
+
+userSchema.statics.userUpdatables = ['first_name','last_name','city','technologies','mobile','timezone'];
 
 module.exports = userSchema;

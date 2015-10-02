@@ -7,7 +7,11 @@ var H = require('../helpers');
 var User = require('../models/user');
 
 router.get('/',function(request,response){
-  User.find({},function(err,users){
+  User.find({},{
+    __v:false,
+    email_verified_at:false,
+    password:false
+  },function(err,users){
     if(err)
       response.status(400).json(H.response(400,"Error while fetching users.",null,err));
     else
@@ -23,7 +27,10 @@ router.post('/',function(request,response){
       last_name : data.last_name,
       mobile : data.mobile,
       timezone : data.timezone,
-      city : data.city
+      city : data.city,
+      email_verified_at:null,
+      created_at:moment(),
+      updated_at:moment()
     });
     var validationError = user.validateSync();
     var errors = [];
@@ -51,4 +58,20 @@ router.post('/',function(request,response){
     });
 })
 
+router.put('/:user_id',function(request,response){
+  var data = request.body;
+  var updateObject = {};
+  for(i in User.userUpdatables)
+  {
+    var field = User.userUpdatables[i];
+    if(data[field])
+      updateObject[field] = data[field];
+  }
+  User.findByIdAndUpdate(request.params.user_id,{$set:updateObject},function(err, user){
+    if(err)
+      response.status(400).json(H.response(400,"Errow while updating user.",null,err));
+    else
+      response.status(201).json(H.response(201,"User updated successfully.",{_id:user._id}));
+  });
+});
 module.exports = router;

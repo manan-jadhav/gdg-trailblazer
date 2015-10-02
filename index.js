@@ -1,5 +1,7 @@
 var appConfig = require('./config').app;// Get the configuration options
 
+require('moment-timezone').tz.setDefault(appConfig.timezone)
+
 var db = require('./db');// Call the Database connection instantiation code for once
 
 var express = require('express');// Express is a framework http://expressjs.com
