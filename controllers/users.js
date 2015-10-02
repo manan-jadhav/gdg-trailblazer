@@ -2,6 +2,8 @@ var express = require('express');
 var moment = require('moment-timezone');
 var crypto = require('crypto');
 var bcrypt = require('bcryptjs');
+var jade = require('jade');
+var jwt = require('jsonwebtoken');
 var router = express.Router();
 
 var config  = require('../config');
@@ -11,7 +13,6 @@ var User = require('../models/user');
 
 var mailer = require('../mailer');
 
-var jade = require('jade');
 
 router.get('/',function(request,response){
   User.find({},{
@@ -40,6 +41,7 @@ router.get('/:user_id',function(request,response){
       response.status(200).json(H.response(200,"Success.",user));
   });
 });
+
 
 router.post('/',function(request,response){
     var data = request.body;
@@ -107,7 +109,7 @@ router.post('/',function(request,response){
     });
 })
 
-router.put('/:user_id',function(request,response){
+router.put('/',function(request,response){
   var data = request.body;
   var updateObject = {};
   for(i in User.userUpdatables)
@@ -116,12 +118,17 @@ router.put('/:user_id',function(request,response){
     if(data[field])
       updateObject[field] = data[field];
   }
-  User.findByIdAndUpdate(request.params.user_id,{$set:updateObject},function(err, user){
-    if(err)
-      response.status(400).json(H.response(400,"Error while updating user.",null,err));
-    else
-      response.status(200).json(H.response(200,"User updated successfully.",{_id:user._id}));
-  });
+  if( request.expiredToken)
+    response.status(401).json(H.response(401,"Token is expired.",null,[]));
+  else if( request.expiredToken)
+    response.status(401).json(H.response(401,"Token is invalid.",null,[]));
+  else
+    User.findByIdAndUpdate(request.authorisedUser._id,{$set:updateObject},function(err, user){
+      if(err)
+        response.status(400).json(H.response(400,"Error while updating user.",null,err));
+      else
+        response.status(200).json(H.response(200,"User updated successfully.",{_id:user._id}));
+    });
 });
 
 router.put('/:user_id/verify_email',function(request,response){
@@ -139,6 +146,32 @@ router.put('/:user_id/verify_email',function(request,response){
     else
       response.status(400).json(H.response(400,"Invalid verification code.",null,
       {email_verification_code:"Invalid verification code."}));
+  });
+});
+
+router.post('/:user_id/authenticate',function(request,response){
+  User.findById(request.params.user_id,function(err,user){
+    if(err)
+      response.status(400).json(H.response(400,"Error while fetching user.",null,err));
+    else
+    {
+      if(request.body.password && bcrypt.compareSync(request.body.password,user.password))
+      {
+        var payload = {
+          _id:user._id,
+          email:user.email,
+          first_name:user.first_name,
+          last_name:user.last_name
+        };
+        var access_token = jwt.sign(payload,config.app.secret,{expiresInMinutes:120});
+        response.status(200).json(H.response(200,"Success.",{_id:user._id,access_token:access_token,expires_at:moment().add(120,'minute').format()}));
+      }
+      else
+        response.status(401).json(
+          H.response(401,"Invalid Credentials.",null,[
+            {field:'password',message:'Invalid Credentials'}
+          ]));
+    }
   });
 });
 module.exports = router;

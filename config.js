@@ -2,6 +2,11 @@ require('dotenv').load();
 var _ = require('underscore');
 var timezones = require('moment-timezone').tz.names();
 
+function generateRandomSecret(length)
+{
+  return require('crypto').randomBytes(length).toString();
+}
+
 var config = {
   database : {
     host : process.env.DB_HOST || "127.0.0.1",
@@ -13,7 +18,8 @@ var config = {
   app: {
     name : process.env.APP_NAME || 'Trailblazer',
     port : process.env.APP_PORT || 8080,
-    timezone : process.env.APP_TIMEZONE || 'UTC'
+    timezone : process.env.APP_TIMEZONE || 'UTC',
+    secret : process.env.APP_SECRET || generateRandomSecret(16)
   },
   mail: {
     from : process.env.MAIL_FROM || 'Trailblazer Mailer <trailblazer@gdgbaroda.com>'
