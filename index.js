@@ -22,14 +22,16 @@ app.use(function(req,res,next){
       jwt.verify(token,appConfig.secret,function(err,decoded){
         if(err.name = 'TokenExpiredError')
           req.expiredToken = req.tokenErrors = true;
-        if(err.name = 'JsonWebTokenError')
+        else if(err.name = 'JsonWebTokenError')
           req.invalidToken = req.tokenErrors  = true;
-        User.findById(decoded._id,function(err,user){
-          if(! err)
-            req.authorisedUser = user;
-          req.tokenErrors = false;
-          next();
-        });
+        if( ! req.tokenErrors)
+          User.findById(decoded._id,function(err,user){
+            if(! err)
+              req.authorisedUser = user;
+            req.tokenErrors = false;
+            next();
+          });
+        else next();
       });
   }
 });

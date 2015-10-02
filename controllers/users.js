@@ -37,6 +37,8 @@ router.get('/:user_id',function(request,response){
   },function(err,user){
     if(err)
       response.status(400).json(H.response(400,"Error while fetching users.",null,err));
+    else if(user == null)
+      response.status(404).json(H.response(404,"User not found"));
     else
       response.status(200).json(H.response(200,"Success.",user));
   });
@@ -133,8 +135,14 @@ router.put('/',function(request,response){
 
 router.put('/:user_id/verify_email',function(request,response){
   User.findById(request.params.user_id,function(err, user){
-    if(user.email_verification_code == request.body.email_verification_code)
-    {
+    if(err)
+      response.status(400).json(H.response(400,"Error while finding user.",null,err));
+    else if(user == null)
+      response.status(404).json(H.response(404,"User not found."))
+    else if(user.email_verification_code != request.body.email_verification_code)
+      response.status(400).json(H.response(400,"Invalid verification code.",null,
+        {email_verification_code:"Invalid verification code."}));
+    else{
       user.email_verified_at = moment();
       user.save(function(err,user){
         if(err)
@@ -143,9 +151,6 @@ router.put('/:user_id/verify_email',function(request,response){
           response.status(200).json(H.response(200,"User email verified successfully.",{_id:user._id}));
       });
     }
-    else
-      response.status(400).json(H.response(400,"Invalid verification code.",null,
-      {email_verification_code:"Invalid verification code."}));
   });
 });
 
