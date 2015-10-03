@@ -22,7 +22,8 @@ var config = {
     secret : process.env.APP_SECRET || generateRandomSecret(16)
   },
   mail: {
-    from : process.env.MAIL_FROM || 'Trailblazer Mailer <trailblazer@gdgbaroda.com>'
+    from : process.env.MAIL_FROM || 'Trailblazer Mailer <trailblazer@gdgbaroda.com>',
+    sendAcceptedEmail : false // Send email when participant is accepted?
   },
   smtp: {
     user : process.env.SMTP_USER,
