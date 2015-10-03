@@ -137,7 +137,7 @@ function(request,response){
     });
 });
 
-router.put('/verify_email',function(request,response){
+router.post('/verify_email',function(request,response){
   // This endpoint is public
   User.findOne({email:request.body.email},function(err, user){
     if(err)

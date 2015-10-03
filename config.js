@@ -23,7 +23,7 @@ var config = {
   },
   mail: {
     from : process.env.MAIL_FROM || 'Trailblazer Mailer <trailblazer@gdgbaroda.com>',
-    sendAcceptedEmail : false // Send email when participant is accepted?
+    sendAcceptedEmail : true // Send email when participant is accepted?
   },
   smtp: {
     user : process.env.SMTP_USER,
