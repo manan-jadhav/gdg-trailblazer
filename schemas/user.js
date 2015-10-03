@@ -42,7 +42,7 @@ var userSchema = new mongoose.Schema({
     default : {
       'self': ['view','update'],
       'users' : ['view'],
-      'events' : ['view','request_participation']
+      'events' : ['view','participate']
     }
   },
   created_at : {

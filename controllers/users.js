@@ -162,7 +162,7 @@ router.put('/verify_email',function(request,response){
 router.post('/authenticate',function(request,response){
   // This endpoint is public
   User.findOne({email:request.body.email},function(err,user){
-    if(!user)
+    if(user == null)
       response.status(404).json(H.response(404,"User not found"));
     else if(err)
       response.status(400).json(H.response(400,"Error while fetching user.",null,err));

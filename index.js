@@ -20,6 +20,8 @@ app.use(function(req,res,next){
   var header = req.get('Authorization');
   if(header)
     var token = header.split(' ')[1]; // 'Bearer access_token' format
+  else
+    next();
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){

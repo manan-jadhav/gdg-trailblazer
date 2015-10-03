@@ -21,7 +21,13 @@ var eventSchema = new mongoose.Schema({
     type:Boolean,
     default:false
   },
-  participants : [userSchema],
+  participants : [
+    {
+      first_name:String,
+      last_name:String,
+      email:String,
+      participation_state:String
+    }],
   start_time : {
     type:Date,
     required:'Start time is required.',

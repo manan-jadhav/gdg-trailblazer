@@ -1,6 +1,7 @@
 var express = require('express');
 var moment = require('moment-timezone');
 var jade = require('jade');
+var _ = require('underscore');
 var router = express.Router();
 
 var config  = require('../config');
@@ -27,6 +28,8 @@ router.get('/:event_id',function(request,response){
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+    else if(event == null)
+      response.status(404).json(H.response(404,"Event not found.",null,err));
     else
       response.status(200).json(H.response(200,"Success.",event));
   });
@@ -91,8 +94,90 @@ function(request,response){
     Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},function(err, event){
       if(err)
         response.status(400).json(H.response(400,"Error while updating event.",null,err));
+      else if(event == null)
+        response.status(404).json(H.response(404,"Event not found."));
       else
         response.status(200).json(H.response(200,"Event updated successfully.",{_id:event._id}));
     });
+});
+
+router.post('/:event_id/request_participation',H.assertPermission('events','participate'),
+function(request,response){
+  Event.findById(request.params.event_id,
+    {__v:false},
+  function(err,event){
+    if(err)
+      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+    else if(event == null)
+      response.status(404).json(H.response(404,"Event not found."));
+    else
+    {
+      var user = _.pick(request.authorisedUser,"_id","first_name","last_name","email");
+      user.participation_state = "requested";
+      event.participants.addToSet(user);
+      event.save(function(err){
+        if(err)
+          response.status(400).json(H.response(400,"Error while saving event.",null,err));
+        else
+          response.status(200).json(H.response(200,"Participation request saved.",user));
+      });
+    }
+  });
+});
+
+router.post('/:event_id/accept_participation',H.assertPermission('events','moderate_participants'),
+function(request,response){
+  Event.findById(request.params.event_id,
+    {__v:false},
+  function(err,event){
+    if(err)
+      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+    else if(event == null)
+      response.status(404).json(H.response(404,"Event not found."));
+    else
+    {
+      var participant = event.participants.id(request.query._id)
+      if(participant)
+      {
+        participant.participation_state = "accepted";
+        event.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,"Error while saving event.",null,err));
+          else
+            response.status(200).json(H.response(200,"Participant accepted.",participant));
+        });
+      }
+      else
+        response.status(404).json(H.response(404,"Participant not found."));
+    }
+  });
+});
+
+router.post('/:event_id/confirm_participation',H.assertPermission('events','participate'),
+function(request,response){
+  Event.findById(request.params.event_id,
+    {__v:false},
+  function(err,event){
+    if(err)
+      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+    else if(event == null)
+      response.status(404).json(H.response(404,"Event not found."));
+    else
+    {
+      var participant = event.participants.id(request.authorisedUser._id)
+      if(participant)
+      {
+        participant.participation_state = "confirmed";
+        event.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,"Error while saving event.",null,err));
+          else
+            response.status(200).json(H.response(200,"Participation confirmed.",participant));
+        });
+      }
+      else
+        response.status(404).json(H.response(404,"Participant not found."));
+    }
+  });
 });
 module.exports = router;
