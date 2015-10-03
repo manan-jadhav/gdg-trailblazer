@@ -19,7 +19,7 @@ module.exports = {
       if( user && (_.contains(user.permissions[context], permission) || _.contains(user.permissions[context], 'all')) )
         next();
       else
-        response.status(403).json(H.response(403,"You do not have the permission to do this action."));
+        response.status(403).json(H.response(403,'You do not have the permission to do this action'));
     };
   }
 };

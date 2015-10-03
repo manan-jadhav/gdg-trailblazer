@@ -11,25 +11,25 @@ var userSchema = new mongoose.Schema({
   first_name : {
     type:String,
     required:'First name is required.',
-    validate:validators.isAlpha({message:"First name should consist of alphabets only."})
+    validate:validators.isAlpha({message:'First name should consist of alphabets only.'})
   },
   last_name : {
     type:String,
     required:'Last name is required.',
-    validate:validators.isAlpha({message:"Last name should consist of alphabets only."})
+    validate:validators.isAlpha({message:'Last name should consist of alphabets only.'})
   },
   email : {
     type:String,
     unique:true,
     required:'Email is required.',
-    validate:validators.isEmail({message:"Improper email format."})
+    validate:validators.isEmail({message:'Improper email format.'})
   },
   mobile : Number,
   password : String,// Password is a hash of the password provided by the user
   city : {
     type:String,
     lowercase:true, // All cities should be in lowercase
-    validate:validators.isAlpha({message:"City name should consist of alphabets only."})
+    validate:validators.isAlpha({message:'City name should consist of alphabets only.'})
   },
   technologies : {
     type:[String],

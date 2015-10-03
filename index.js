@@ -31,9 +31,9 @@ app.use(function(req,res,next){
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
         if(err && err.name == 'TokenExpiredError')
-          res.status(401).json(H.response(401,"Access token is expired."));
+          res.status(401).json(H.response(401,'Access token is expired.'));
         else if(err)
-          res.status(400).json(H.response(400,"Access token is invalid."));
+          res.status(400).json(H.response(400,'Access token is invalid.'));
         else
           User.findById(decoded._id,function(err,user){
             if(! err)

@@ -8,7 +8,7 @@ function getConnectionInstance()
   if(connectionInstance == null)
   {
     connectionInstance = emailjs.server.connect(smtpConfig);
-    console.log("Mailer instance created.")
+    console.log('Mailer instance created.')
   }
   return connectionInstance;
 }

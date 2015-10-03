@@ -9,11 +9,11 @@ function generateRandomSecret(length)
 
 var config = {
   database : {
-    host : process.env.DB_HOST || "127.0.0.1",
-    port : process.env.DB_PORT || "27017",
-    databaseName : process.env.DB_NAME || "trailblazer",
-    user : process.env.DB_USER || "trailblazer",
-    pass : process.env.DB_PASS || "trailblazer"
+    host : process.env.DB_HOST || '127.0.0.1',
+    port : process.env.DB_PORT || '27017',
+    databaseName : process.env.DB_NAME || 'trailblazer',
+    user : process.env.DB_USER || 'trailblazer',
+    pass : process.env.DB_PASS || 'trailblazer'
   },
   app: {
     name : process.env.APP_NAME || 'Trailblazer',
@@ -39,7 +39,7 @@ var config = {
 }
 if( ! _.contains(timezones, config.app.timezone))
 {
-  console.log('Invalid timezone "'+config.app.timezone+'" specified. Falling back, using UTC timezone.');
+  console.log('Invalid timezone '+config.app.timezone+' specified. Falling back, using UTC timezone.');
   config.app.timezone = 'UTC';
 }
 module.exports = config;

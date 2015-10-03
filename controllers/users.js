@@ -24,9 +24,9 @@ function(request,response){
     password:false
   },function(err,users){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching users",null,err));
+      response.status(400).json(H.response(400,'Error while fetching users',null,err));
     else
-      response.status(200).json(H.response(200,"Success",users));
+      response.status(200).json(H.response(200,'Success',users));
   });
 });
 
@@ -39,11 +39,11 @@ function(request,response){
     password:false
   },function(err,user){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching users",null,err));
+      response.status(400).json(H.response(400,'Error while fetching users',null,err));
     else if(user == null)
-      response.status(404).json(H.response(404,"User not found"));
+      response.status(404).json(H.response(404,'User not found'));
     else
-      response.status(200).json(H.response(200,"Success",user));
+      response.status(200).json(H.response(200,'Success',user));
   });
 });
 
@@ -52,9 +52,9 @@ function(request,response){
   User.findById(request.params.user_id,
     function(err,user){
       if(err)
-        response.status(400).json(H.response(400,"Error while fetching users",null,err));
+        response.status(400).json(H.response(400,'Error while fetching users',null,err));
       else if(user == null)
-        response.status(404).json(H.response(404,"User not found"));
+        response.status(404).json(H.response(404,'User not found'));
       else
       {
         var newPermissions = request.body;
@@ -66,9 +66,9 @@ function(request,response){
         user.markModified('permissions');
         user.save(function(err){
           if(err)
-            response.status(400).json(H.response(400,"Error while saving user",null,err));
+            response.status(400).json(H.response(400,'Error while saving user',null,err));
           else
-            response.status(200).json(H.response(200,"Permissions granted",{_id:user._id}));
+            response.status(200).json(H.response(200,'Permissions granted',{_id:user._id}));
         });
       }
     });
@@ -80,9 +80,9 @@ function(request,response){
   User.findById(request.params.user_id,
     function(err,user){
       if(err)
-        response.status(400).json(H.response(400,"Error while fetching users",null,err));
+        response.status(400).json(H.response(400,'Error while fetching users',null,err));
       else if(user == null)
-        response.status(404).json(H.response(404,"User not found"));
+        response.status(404).json(H.response(404,'User not found'));
       else
       {
         var revokedPermissions = request.body;
@@ -93,9 +93,9 @@ function(request,response){
         user.markModified('permissions');
         user.save(function(err){
           if(err)
-            response.status(400).json(H.response(400,"Error while saving user",null,err));
+            response.status(400).json(H.response(400,'Error while saving user',null,err));
           else
-            response.status(200).json(H.response(200,"Permissions revoked",{_id:user._id}));
+            response.status(200).json(H.response(200,'Permissions revoked',{_id:user._id}));
         });
       }
     });
@@ -129,7 +129,7 @@ router.post('/',function(request,response){
     else
       user.password = bcrypt.hashSync(data.password,8);
     if(errors.length > 0)
-      response.status(422).json(H.response(422,"Invalid data",null,errors));
+      response.status(422).json(H.response(422,'Invalid data',null,errors));
     else
     user.save(function(err){
       if(err)
@@ -137,11 +137,11 @@ router.post('/',function(request,response){
         var errors = [];
         for(key in err.errors)
           errors.push({field:key,message:err.errors[key].message});
-        response.status(400).json(H.response(400,"Error while saving user",null,errors));
+        response.status(400).json(H.response(400,'Error while saving user',null,errors));
       }
       else
       {
-        response.status(201).json(H.response(201,"User created successfully",{_id:user._id}));
+        response.status(201).json(H.response(201,'User created successfully',{_id:user._id}));
         mailer.send({
           from : config.mail.from,
           to : user.email,
@@ -150,7 +150,7 @@ router.post('/',function(request,response){
           text : jade.renderFile('emails/users/welcome/text.jade',{user:user,config:config})
         },function(err,message){
           if(err)
-            console.log("Error while sending welcome email : \n",err)
+            console.log('Error while sending welcome email : \n',err)
         });
         mailer.send({
           from : config.mail.from,
@@ -163,7 +163,7 @@ router.post('/',function(request,response){
           {user:user,config:config,verificationCode:user.email_verification_code})
         },function(err,message){
           if(err)
-            console.log("Error while sending verification email : \n",err)
+            console.log('Error while sending verification email : \n',err)
         });
       }
     });
@@ -181,9 +181,9 @@ function(request,response){
   }
   User.findByIdAndUpdate(request.authorisedUser._id,{$set:updateObject},function(err, user){
     if(err)
-      response.status(400).json(H.response(400,"Error while updating user",null,err));
+      response.status(400).json(H.response(400,'Error while updating user',null,err));
     else
-      response.status(200).json(H.response(200,"User updated successfully",{_id:user._id}));
+      response.status(200).json(H.response(200,'User updated successfully',{_id:user._id}));
   });
 });
 
@@ -191,19 +191,19 @@ router.post('/verify_email',function(request,response){
   // This endpoint is public
   User.findOne({email:request.body.email},function(err, user){
     if(err)
-      response.status(400).json(H.response(400,"Error while finding user",null,err));
+      response.status(400).json(H.response(400,'Error while finding user',null,err));
     else if(user == null)
-      response.status(404).json(H.response(404,"User not found"))
+      response.status(404).json(H.response(404,'User not found'))
     else if(user.email_verification_code != request.body.email_verification_code)
-      response.status(400).json(H.response(400,"Invalid verification code",null,
-        {field:'email_verification_code',message:"Invalid verification code"}));
+      response.status(400).json(H.response(400,'Invalid verification code',null,
+        {field:'email_verification_code',message:'Invalid verification code'}));
     else{
       user.email_verified_at = moment();
       user.save(function(err,user){
         if(err)
-          response.status(400).json(H.response(400,"Error while updating user",null,err));
+          response.status(400).json(H.response(400,'Error while updating user',null,err));
         else
-          response.status(200).json(H.response(200,"User email verified successfully",{_id:user._id}));
+          response.status(200).json(H.response(200,'User email verified successfully',{_id:user._id}));
       });
     }
   });
@@ -213,13 +213,13 @@ router.post('/authenticate',function(request,response){
   // This endpoint is public
   User.findOne({email:request.body.email},function(err,user){
     if(user == null)
-      response.status(404).json(H.response(404,"User not found"));
+      response.status(404).json(H.response(404,'User not found'));
     else if(err)
-      response.status(400).json(H.response(400,"Error while fetching user",null,err));
+      response.status(400).json(H.response(400,'Error while fetching user',null,err));
     else
     {
       if( ! user.email_verified_at)
-        response.status(403).json(H.response(403,"Email not verified"));
+        response.status(403).json(H.response(403,'Email not verified'));
       else if(request.body.password && bcrypt.compareSync(request.body.password,user.password))
       {
         var payload = {
@@ -229,11 +229,11 @@ router.post('/authenticate',function(request,response){
           last_name:user.last_name
         };
         var access_token = jwt.sign(payload,config.app.secret,{expiresInMinutes:120});
-        response.status(200).json(H.response(200,"Success",{_id:user._id,access_token:access_token,expires_at:moment().add(120,'minute').format()}));
+        response.status(200).json(H.response(200,'Success',{_id:user._id,access_token:access_token,expires_at:moment().add(120,'minute').format()}));
       }
       else
         response.status(401).json(
-          H.response(401,"Invalid Credentials",null,[
+          H.response(401,'Invalid Credentials',null,[
             {field:'password',message:'Invalid Credentials'}
           ]));
     }
