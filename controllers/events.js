@@ -16,9 +16,9 @@ router.get('/',function(request,response){
     __v:false,
   },function(err,events){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching events.",null,err));
+      response.status(400).json(H.response(400,"Error while fetching events",null,err));
     else
-      response.status(200).json(H.response(200,"Success.",events));
+      response.status(200).json(H.response(200,"Success",events));
   });
 });
 
@@ -27,11 +27,11 @@ router.get('/:event_id',function(request,response){
     {__v:false},
   function(err,event){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+      response.status(400).json(H.response(400,"Error while fetching event",null,err));
     else if(event == null)
-      response.status(404).json(H.response(404,"Event not found.",null,err));
+      response.status(404).json(H.response(404,"Event not found",null,err));
     else
-      response.status(200).json(H.response(200,"Success.",event));
+      response.status(200).json(H.response(200,"Success",event));
   });
 });
 
@@ -59,7 +59,7 @@ function(request,response){
       errors.push({field:key,message:validationErrors.errors[key].message});
   }
   if(errors.length > 0)
-    response.status(422).json(H.response(422,"Invalid data.",null,errors));
+    response.status(422).json(H.response(422,"Invalid data",null,errors));
   else
     event.save(function(err){
       if(err)
@@ -67,11 +67,11 @@ function(request,response){
         var errors = [];
         for(key in err.errors)
           errors.push({field:key,message:err.errors[key].message});
-        response.status(400).json(H.response(400,"Error while saving event.",null,errors));
+        response.status(400).json(H.response(400,"Error while saving event",null,errors));
       }
       else
       {
-        response.status(201).json(H.response(201,"Event created successfully.",{_id:event._id}));
+        response.status(201).json(H.response(201,"Event created successfully",{_id:event._id}));
       }
     });
 });
@@ -88,11 +88,11 @@ function(request,response){
   }
   Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},function(err, event){
     if(err)
-      response.status(400).json(H.response(400,"Error while updating event.",null,err));
+      response.status(400).json(H.response(400,"Error while updating event",null,err));
     else if(event == null)
-      response.status(404).json(H.response(404,"Event not found."));
+      response.status(404).json(H.response(404,"Event not found"));
     else
-      response.status(200).json(H.response(200,"Event updated successfully.",{_id:event._id}));
+      response.status(200).json(H.response(200,"Event updated successfully",{_id:event._id}));
   });
 });
 
@@ -102,9 +102,9 @@ function(request,response){
     {__v:false},
   function(err,event){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+      response.status(400).json(H.response(400,"Error while fetching event",null,err));
     else if(event == null)
-      response.status(404).json(H.response(404,"Event not found."));
+      response.status(404).json(H.response(404,"Event not found"));
     else
     {
       var user = _.pick(request.authorisedUser,"_id","first_name","last_name","email");
@@ -112,9 +112,9 @@ function(request,response){
       event.participants.addToSet(user);
       event.save(function(err){
         if(err)
-          response.status(400).json(H.response(400,"Error while saving event.",null,err));
+          response.status(400).json(H.response(400,"Error while saving event",null,err));
         else
-          response.status(200).json(H.response(200,"Participation request saved.",user));
+          response.status(200).json(H.response(200,"Participation request saved",user));
       });
     }
   });
@@ -126,9 +126,9 @@ function(request,response){
     {__v:false},
   function(err,event){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+      response.status(400).json(H.response(400,"Error while fetching event",null,err));
     else if(event == null)
-      response.status(404).json(H.response(404,"Event not found."));
+      response.status(404).json(H.response(404,"Event not found"));
     else
     {
       var participant = event.participants.id(request.query._id)
@@ -137,10 +137,10 @@ function(request,response){
         participant.participation_state = "accepted";
         event.save(function(err,event){
           if(err)
-            response.status(400).json(H.response(400,"Error while saving event.",null,err));
+            response.status(400).json(H.response(400,"Error while saving event",null,err));
           else
           {
-            response.status(200).json(H.response(200,"Participant accepted.",participant)).end();
+            response.status(200).json(H.response(200,"Participant accepted",participant)).end();
             var data = {user:participant,config:config,event:event};
             if(config.mail.sendAcceptedEmail)
               mailer.send({
@@ -157,7 +157,7 @@ function(request,response){
         });
       }
       else
-        response.status(404).json(H.response(404,"Participant not found."));
+        response.status(404).json(H.response(404,"Participant not found"));
     }
   });
 });
@@ -168,9 +168,9 @@ function(request,response){
     {__v:false},
   function(err,event){
     if(err)
-      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+      response.status(400).json(H.response(400,"Error while fetching event",null,err));
     else if(event == null)
-      response.status(404).json(H.response(404,"Event not found."));
+      response.status(404).json(H.response(404,"Event not found"));
     else
     {
       var participant = event.participants.id(request.authorisedUser._id)
@@ -179,13 +179,13 @@ function(request,response){
         participant.participation_state = "confirmed";
         event.save(function(err){
           if(err)
-            response.status(400).json(H.response(400,"Error while saving event.",null,err));
+            response.status(400).json(H.response(400,"Error while saving event",null,err));
           else
-            response.status(200).json(H.response(200,"Participation confirmed.",participant));
+            response.status(200).json(H.response(200,"Participation confirmed",participant));
         });
       }
       else
-        response.status(404).json(H.response(404,"Participant not found."));
+        response.status(404).json(H.response(404,"Participant not found"));
     }
   });
 });
