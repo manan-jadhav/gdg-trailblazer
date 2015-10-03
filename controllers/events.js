@@ -21,7 +21,8 @@ router.get('/',function(request,response){
   });
 });
 
-router.post('/',function(request,response){
+router.post('/',H.assertPermission('events','create'),
+function(request,response){
   var data = request.body;
   var event = new Event({
     title:data.title,
@@ -61,7 +62,8 @@ router.post('/',function(request,response){
     });
 });
 
-router.put('/:event_id',function(request,response){
+router.put('/:event_id',H.assertPermission('events','update'),
+function(request,response){
   var data = request.body;
   var updateObject = {};
   for(i in Event.updatables)

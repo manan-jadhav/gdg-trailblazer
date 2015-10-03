@@ -35,6 +35,16 @@ var userSchema = new mongoose.Schema({
     type:[String],
     lowercase:true, // All technologies should be in lowercase
   },
+  roles : {
+    type: {
+      String:[String]
+    },
+    default : {
+      'self': ['view','update'],
+      'users' : ['view'],
+      'events' : ['view']
+    }
+  },
   created_at : {
     type:Date,
     default:Date.now,

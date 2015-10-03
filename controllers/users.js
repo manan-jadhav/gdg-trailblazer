@@ -14,7 +14,8 @@ var User = require('../models/user');
 var mailer = require('../mailer');
 
 
-router.get('/',function(request,response){
+router.get('/',H.assertPermission('users','view'),
+function(request,response){
   User.find({},{
     __v:false,
     email_verified_at:false,
@@ -28,7 +29,8 @@ router.get('/',function(request,response){
   });
 });
 
-router.get('/:user_id',function(request,response){
+router.get('/:user_id',H.assertPermission('users','view'),
+function(request,response){
   User.findById(request.params.user_id,{
     __v:false,
     email_verified_at:false,
@@ -46,6 +48,7 @@ router.get('/:user_id',function(request,response){
 
 
 router.post('/',function(request,response){
+  // This endpoint is public
     var data = request.body;
     var user = new User({
       email : data.email,
@@ -111,7 +114,8 @@ router.post('/',function(request,response){
     });
 })
 
-router.put('/',function(request,response){
+router.put('/',H.assertPermission('self','update'),
+function(request,response){
   var data = request.body;
   var updateObject = {};
   for(i in User.userUpdatables)
@@ -133,15 +137,16 @@ router.put('/',function(request,response){
     });
 });
 
-router.put('/:user_id/verify_email',function(request,response){
-  User.findById(request.params.user_id,function(err, user){
+router.put('/verify_email',function(request,response){
+  // This endpoint is public
+  User.findOne({email:request.body.email},function(err, user){
     if(err)
       response.status(400).json(H.response(400,"Error while finding user.",null,err));
     else if(user == null)
       response.status(404).json(H.response(404,"User not found."))
     else if(user.email_verification_code != request.body.email_verification_code)
       response.status(400).json(H.response(400,"Invalid verification code.",null,
-        {email_verification_code:"Invalid verification code."}));
+        {field:'email_verification_code',message:"Invalid verification code."}));
     else{
       user.email_verified_at = moment();
       user.save(function(err,user){
@@ -154,13 +159,18 @@ router.put('/:user_id/verify_email',function(request,response){
   });
 });
 
-router.post('/:user_id/authenticate',function(request,response){
-  User.findById(request.params.user_id,function(err,user){
-    if(err)
+router.post('/authenticate',function(request,response){
+  // This endpoint is public
+  User.findOne({email:request.body.email},function(err,user){
+    if(!user)
+      response.status(404).json(H.response(404,"User not found"));
+    else if(err)
       response.status(400).json(H.response(400,"Error while fetching user.",null,err));
     else
     {
-      if(request.body.password && bcrypt.compareSync(request.body.password,user.password))
+      if( ! user.email_verified_at)
+        response.status(403).json(H.response(403,"Email not verified."));
+      else if(request.body.password && bcrypt.compareSync(request.body.password,user.password))
       {
         var payload = {
           _id:user._id,

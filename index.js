@@ -17,7 +17,9 @@ var eventsController = require('./controllers/events');
 app.use(bodyParser.json());// Use 'body-parser' to parse JSON bodies.
 
 app.use(function(req,res,next){
-  var token = req.get('Authorization').split(' ')[1]; // 'Bearer access_token' format
+  var header = req.get('Authorization');
+  if(header)
+    var token = header.split(' ')[1]; // 'Bearer access_token' format
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
