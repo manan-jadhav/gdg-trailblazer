@@ -86,19 +86,14 @@ function(request,response){
     if(data[field])
       updateObject[field] = data[field];
   }
-  if( request.expiredToken)
-    response.status(401).json(H.response(401,"Token is expired.",null,[]));
-  else if( request.expiredToken)
-    response.status(401).json(H.response(401,"Token is invalid.",null,[]));
-  else
-    Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},function(err, event){
-      if(err)
-        response.status(400).json(H.response(400,"Error while updating event.",null,err));
-      else if(event == null)
-        response.status(404).json(H.response(404,"Event not found."));
-      else
-        response.status(200).json(H.response(200,"Event updated successfully.",{_id:event._id}));
-    });
+  Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},function(err, event){
+    if(err)
+      response.status(400).json(H.response(400,"Error while updating event.",null,err));
+    else if(event == null)
+      response.status(404).json(H.response(404,"Event not found."));
+    else
+      response.status(200).json(H.response(200,"Event updated successfully.",{_id:event._id}));
+  });
 });
 
 router.post('/:event_id/request_participation',H.assertPermission('events','participate'),

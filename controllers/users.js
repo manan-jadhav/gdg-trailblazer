@@ -179,17 +179,12 @@ function(request,response){
     if(data[field])
       updateObject[field] = data[field];
   }
-  if( request.expiredToken)
-    response.status(401).json(H.response(401,"Token is expired.",null,[]));
-  else if( request.expiredToken)
-    response.status(401).json(H.response(401,"Token is invalid.",null,[]));
-  else
-    User.findByIdAndUpdate(request.authorisedUser._id,{$set:updateObject},function(err, user){
-      if(err)
-        response.status(400).json(H.response(400,"Error while updating user.",null,err));
-      else
-        response.status(200).json(H.response(200,"User updated successfully.",{_id:user._id}));
-    });
+  User.findByIdAndUpdate(request.authorisedUser._id,{$set:updateObject},function(err, user){
+    if(err)
+      response.status(400).json(H.response(400,"Error while updating user.",null,err));
+    else
+      response.status(200).json(H.response(200,"User updated successfully.",{_id:user._id}));
+  });
 });
 
 router.post('/verify_email',function(request,response){

@@ -5,6 +5,8 @@ var jwt = require('jsonwebtoken');
 
 var db = require('./db');// Call the Database connection instantiation code for once
 
+var H = require('./helpers');
+
 var User = require('./models/user');
 
 var express = require('express');// Express is a framework http://expressjs.com
@@ -17,26 +19,28 @@ var eventsController = require('./controllers/events');
 app.use(bodyParser.json());// Use 'body-parser' to parse JSON bodies.
 
 app.use(function(req,res,next){
-  var header = req.get('Authorization');
-  if(header)
-    var token = header.split(' ')[1]; // 'Bearer access_token' format
-  else
-    next();
+  try
+  {
+    var header = req.get('Authorization');
+    if(header)
+      var token = header.split(' ')[1]; // 'Bearer access_token' format
+    else
+      next();
+  }catch(e){}
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
         if(err && err.name == 'TokenExpiredError')
-          req.expiredToken = req.tokenErrors = true;
-        else if(err && err.name == 'JsonWebTokenError')
-          req.invalidToken = req.tokenErrors  = true;
-        if( ! req.tokenErrors)
+          res.status(401).json(H.response(401,"Access token is expired."));
+        else if(err)
+          res.status(400).json(H.response(400,"Access token is invalid."));
+        else
           User.findById(decoded._id,function(err,user){
             if(! err)
               req.authorisedUser = user;
             req.tokenErrors = false;
             next();
           });
-        else next();
       });
   }
 });
