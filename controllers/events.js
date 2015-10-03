@@ -137,14 +137,27 @@ function(request,response){
     else
     {
       var participant = event.participants.id(request.query._id)
-      if(participant)
+      if(participant && participant.participation_state == "requested")
       {
         participant.participation_state = "accepted";
-        event.save(function(err){
+        event.save(function(err,event){
           if(err)
             response.status(400).json(H.response(400,"Error while saving event.",null,err));
           else
-            response.status(200).json(H.response(200,"Participant accepted.",participant));
+          {
+            response.status(200).json(H.response(200,"Participant accepted.",participant)).end();
+            var data = {user:participant,config:config,event:event};
+            mailer.send({
+              from : config.mail.from,
+              to : participant.email,
+              subject : jade.renderFile('emails/events/accepted/subject.jade',data),
+              html : jade.renderFile('emails/events/accepted/html.jade',data),
+              text : jade.renderFile('emails/events/accepted/text.jade',data)
+            },function(err,message){
+              if(err)
+                console.log("Error while sending welcome email : \n",err)
+            });
+          }
         });
       }
       else
@@ -165,7 +178,7 @@ function(request,response){
     else
     {
       var participant = event.participants.id(request.authorisedUser._id)
-      if(participant)
+      if(participant && participant.participation_state == "accepted")
       {
         participant.participation_state = "confirmed";
         event.save(function(err){

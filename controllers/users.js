@@ -90,9 +90,9 @@ router.post('/',function(request,response){
         mailer.send({
           from : config.mail.from,
           to : user.email,
-          subject : jade.renderFile('emails/welcome/subject.jade',{user:user,config:config}),
-          html : jade.renderFile('emails/welcome/html.jade',{user:user,config:config}),
-          text : jade.renderFile('emails/welcome/text.jade',{user:user,config:config})
+          subject : jade.renderFile('emails/users/welcome/subject.jade',{user:user,config:config}),
+          html : jade.renderFile('emails/users/welcome/html.jade',{user:user,config:config}),
+          text : jade.renderFile('emails/users/welcome/text.jade',{user:user,config:config})
         },function(err,message){
           if(err)
             console.log("Error while sending welcome email : \n",err)
@@ -100,11 +100,11 @@ router.post('/',function(request,response){
         mailer.send({
           from : config.mail.from,
           to : user.email,
-          subject : jade.renderFile('emails/verification/subject.jade',
+          subject : jade.renderFile('emails/users/verification/subject.jade',
             {user:user,config:config,verificationCode:user.email_verification_code}),
-          html : jade.renderFile('emails/verification/html.jade',
+          html : jade.renderFile('emails/users/verification/html.jade',
             {user:user,config:config,verificationCode:user.email_verification_code}),
-          text : jade.renderFile('emails/verification/text.jade',
+          text : jade.renderFile('emails/users/verification/text.jade',
           {user:user,config:config,verificationCode:user.email_verification_code})
         },function(err,message){
           if(err)
