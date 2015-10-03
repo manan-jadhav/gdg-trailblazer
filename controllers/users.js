@@ -4,6 +4,7 @@ var crypto = require('crypto');
 var bcrypt = require('bcryptjs');
 var jade = require('jade');
 var jwt = require('jsonwebtoken');
+var _ = require('underscore');
 var router = express.Router();
 
 var config  = require('../config');
@@ -44,6 +45,60 @@ function(request,response){
     else
       response.status(200).json(H.response(200,"Success.",user));
   });
+});
+
+router.put('/:user_id/grant_permissions',H.assertPermission('users','manage_permissions'),
+function(request,response){
+  User.findById(request.params.user_id,
+    function(err,user){
+      if(err)
+        response.status(400).json(H.response(400,"Error while fetching users.",null,err));
+      else if(user == null)
+        response.status(404).json(H.response(404,"User not found"));
+      else
+      {
+        var newPermissions = request.body;
+        var contexts = _.keys(newPermissions);
+        _.each(contexts,function(context){
+          if( ! _.contains(user.permissions[context],newPermissions[context]) )
+            user.permissions[context] = _.union(user.permissions[context],newPermissions[context]);
+        });
+        user.markModified('permissions');
+        user.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,"Error while saving user.",null,err));
+          else
+            response.status(200).json(H.response(200,"Permissions granted.",{_id:user._id}));
+        });
+      }
+    });
+});
+
+
+router.put('/:user_id/revoke_permissions',H.assertPermission('users','manage_permissions'),
+function(request,response){
+  User.findById(request.params.user_id,
+    function(err,user){
+      if(err)
+        response.status(400).json(H.response(400,"Error while fetching users.",null,err));
+      else if(user == null)
+        response.status(404).json(H.response(404,"User not found"));
+      else
+      {
+        var revokedPermissions = request.body;
+        var contexts = _.keys(revokedPermissions);
+        _.each(contexts,function(context){
+            user.permissions[context] = _.difference(user.permissions[context],revokedPermissions[context]);
+        });
+        user.markModified('permissions');
+        user.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,"Error while saving user.",null,err));
+          else
+            response.status(200).json(H.response(200,"Permissions revoked.",{_id:user._id}));
+        });
+      }
+    });
 });
 
 
