@@ -16,7 +16,7 @@ module.exports = {
     return function (request,response,next)
     {
       var user = request.authorisedUser;
-      if( user && (_.contains(user.roles[context], permission) || _.contains(user.roles[context], 'all')) )
+      if( user && (_.contains(user.permissions[context], permission) || _.contains(user.permissions[context], 'all')) )
         next();
       else
         response.status(403).json(H.response(403,"You do not have the permission to do this action."));

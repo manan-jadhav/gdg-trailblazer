@@ -35,14 +35,14 @@ var userSchema = new mongoose.Schema({
     type:[String],
     lowercase:true, // All technologies should be in lowercase
   },
-  roles : {
+  permissions : {
     type: {
       String:[String]
     },
     default : {
       'self': ['view','update'],
       'users' : ['view'],
-      'events' : ['view']
+      'events' : ['view','request_participation']
     }
   },
   created_at : {
