@@ -21,6 +21,17 @@ router.get('/',function(request,response){
   });
 });
 
+router.get('/:event_id',function(request,response){
+  Event.findById(request.params.event_id,
+    {__v:false},
+  function(err,event){
+    if(err)
+      response.status(400).json(H.response(400,"Error while fetching event.",null,err));
+    else
+      response.status(200).json(H.response(200,"Success.",event));
+  });
+});
+
 router.post('/',H.assertPermission('events','create'),
 function(request,response){
   var data = request.body;

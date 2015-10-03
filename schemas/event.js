@@ -17,9 +17,9 @@ var eventSchema = new mongoose.Schema({
     required:'Title is required.'
   },
   description : String,
-  event_state : {
-    type:String,
-    default:'upcoming'
+  is_cancelled : {
+    type:Boolean,
+    default:false
   },
   participants : [userSchema],
   start_time : {
@@ -51,6 +51,15 @@ var eventSchema = new mongoose.Schema({
 
 eventSchema.set('toJSON', { virtuals: true, getters:true });
 eventSchema.set('toObject', { virtuals: true, getters:true });
+
+eventSchema.virtual('event_state').get(function(){
+  if(this.is_cancelled)
+    return 'cancelled';
+  else if( moment().isBefore(this.start_time) )
+    return 'upcoming';
+  else
+    return 'completed';
+});
 
 eventSchema.statics.updatables = ['title','description','start_time','end_time','address','location','event_state','participants'];
 
