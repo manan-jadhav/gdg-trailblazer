@@ -12,6 +12,7 @@ var app = express();// Initialize the app
 var bodyParser = require('body-parser');
 
 var usersController = require('./controllers/users');
+var eventsController = require('./controllers/events');
 
 app.use(bodyParser.json());// Use 'body-parser' to parse JSON bodies.
 
@@ -20,9 +21,9 @@ app.use(function(req,res,next){
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
-        if(err.name = 'TokenExpiredError')
+        if(err && err.name == 'TokenExpiredError')
           req.expiredToken = req.tokenErrors = true;
-        else if(err.name = 'JsonWebTokenError')
+        else if(err && err.name == 'JsonWebTokenError')
           req.invalidToken = req.tokenErrors  = true;
         if( ! req.tokenErrors)
           User.findById(decoded._id,function(err,user){
@@ -37,6 +38,7 @@ app.use(function(req,res,next){
 });
 
 app.use('/users',usersController);
+app.use('/events',eventsController);
 
 
 // Listen to the port specified in config file
