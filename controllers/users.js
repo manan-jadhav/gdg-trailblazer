@@ -187,6 +187,24 @@ function(request,response){
   });
 });
 
+router.put('/:user_id',H.assertPermission('users','update'),
+function(request,response){
+  var data = request.body;
+  var updateObject = {};
+  for(i in User.userUpdatables)
+  {
+    var field = User.userUpdatables[i];
+    if(data[field])
+      updateObject[field] = data[field];
+  }
+  User.findByIdAndUpdate(request.params.user_id,{$set:updateObject},function(err, user){
+    if(err)
+      response.status(400).json(H.response(400,'Error while updating user',null,err));
+    else
+      response.status(200).json(H.response(200,'User updated successfully',{_id:user._id}));
+  });
+});
+
 router.post('/verify_email',function(request,response){
   // This endpoint is public
   User.findOne({email:request.body.email},function(err, user){
@@ -194,6 +212,8 @@ router.post('/verify_email',function(request,response){
       response.status(400).json(H.response(400,'Error while finding user',null,err));
     else if(user == null)
       response.status(404).json(H.response(404,'User not found'))
+    else if(user.email_verified_at)
+      response.status(422).json(H.response(422,'Email has been already verified'));
     else if(user.email_verification_code != request.body.email_verification_code)
       response.status(400).json(H.response(400,'Invalid verification code',null,
         {field:'email_verification_code',message:'Invalid verification code'}));
