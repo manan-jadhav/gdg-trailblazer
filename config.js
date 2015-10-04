@@ -18,6 +18,7 @@ var config = {
   app: {
     name : process.env.APP_NAME || 'Trailblazer',
     port : process.env.APP_PORT || 8080,
+    hostname : process.env.APP_HOST || 'localhost',
     timezone : process.env.APP_TIMEZONE || 'UTC',
     secret : process.env.APP_SECRET || generateRandomSecret(16)
   },

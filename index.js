@@ -50,6 +50,6 @@ app.use('/events',eventsController);
 
 
 // Listen to the port specified in config file
-app.listen(appConfig.port, function(){
-  console.log('Trailblazer server listening on port '+appConfig.port);
+app.listen(appConfig.port,appConfig.hostname, function(){
+  console.log('Trailblazer server listening on '+appConfig.hostname+':'+appConfig.port);
 });
