@@ -12,8 +12,8 @@ var config = {
     host : process.env.DB_HOST || '127.0.0.1',
     port : process.env.DB_PORT || '27017',
     databaseName : process.env.DB_NAME || 'trailblazer',
-    user : process.env.DB_USER || 'trailblazer',
-    pass : process.env.DB_PASS || 'trailblazer'
+    user : process.env.DB_USER,
+    pass : process.env.DB_PASS
   },
   app: {
     name : process.env.APP_NAME || 'Trailblazer',
