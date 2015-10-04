@@ -49,7 +49,9 @@ function(request,response){
     location:{
       latitude:data.latitude,
       longitude:data.longitude
-    }
+    },
+    created_at:moment(),
+    updated_at:moment()
   });
   var validationErrors = event.validateSync();
   var errors = [];
@@ -79,7 +81,7 @@ function(request,response){
 router.put('/:event_id',H.assertPermission('events','update'),
 function(request,response){
   var data = request.body;
-  var updateObject = {};
+  var updateObject = {updated_at:moment()};
   for(i in Event.updatables)
   {
     var field = Event.updatables[i];

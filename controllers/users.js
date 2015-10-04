@@ -64,6 +64,7 @@ function(request,response){
             user.permissions[context] = _.union(user.permissions[context],newPermissions[context]);
         });
         user.markModified('permissions');
+        user.updated_at = moment();
         user.save(function(err){
           if(err)
             response.status(400).json(H.response(400,'Error while saving user',null,err));
@@ -91,6 +92,7 @@ function(request,response){
             user.permissions[context] = _.difference(user.permissions[context],revokedPermissions[context]);
         });
         user.markModified('permissions');
+        user.updated_at = moment();
         user.save(function(err){
           if(err)
             response.status(400).json(H.response(400,'Error while saving user',null,err));
@@ -172,7 +174,7 @@ router.post('/',function(request,response){
 router.put('/',H.assertPermission('self','update'),
 function(request,response){
   var data = request.body;
-  var updateObject = {};
+  var updateObject = {updated_at:moment()};
   for(i in User.userUpdatables)
   {
     var field = User.userUpdatables[i];
@@ -190,7 +192,7 @@ function(request,response){
 router.put('/:user_id',H.assertPermission('users','update'),
 function(request,response){
   var data = request.body;
-  var updateObject = {};
+  var updateObject = {updated_at:moment()};
   for(i in User.userUpdatables)
   {
     var field = User.userUpdatables[i];
@@ -219,6 +221,7 @@ router.post('/verify_email',function(request,response){
         {field:'email_verification_code',message:'Invalid verification code'}));
     else{
       user.email_verified_at = moment();
+      user.updated_at = moment();
       user.save(function(err,user){
         if(err)
           response.status(400).json(H.response(400,'Error while updating user',null,err));
