@@ -59,6 +59,7 @@ function(request,response){
       latitude:data.latitude,
       longitude:data.longitude
     },
+    questions:data.questions,
     created_at:moment(),
     updated_at:moment()
   });

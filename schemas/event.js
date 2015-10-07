@@ -32,7 +32,10 @@ var eventSchema = new mongoose.Schema({
   },
   questions : {
     type:[{
-      question:String,
+      question:{
+        type:String,
+        required:'Question is required'
+      },
       is_mandatory:{
         type:Boolean,
         default:false
@@ -65,7 +68,7 @@ var eventSchema = new mongoose.Schema({
   },
   end_time : {
     type:Date,
-    required:'Start time is required.',
+    required:'End time is required.',
     get:dateFormatter
   },
   address: String,
