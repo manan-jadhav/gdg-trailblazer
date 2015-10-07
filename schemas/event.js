@@ -1,7 +1,8 @@
 var mongoose = require('mongoose');
 var config = require('../config');
 
-var moment = require('moment-timezone')
+var moment = require('moment-timezone');
+var validators = require('mongoose-validators');
 
 var userSchema = require('./user');
 
@@ -21,11 +22,40 @@ var eventSchema = new mongoose.Schema({
     type:Boolean,
     default:false
   },
+  event_url : {
+    type:String,
+    validate:validators.isURL({
+      message:"URL should be properly formatted",
+      protocols:["http","https"],
+      require_protocol:true
+    })
+  },
+  questions : {
+    type:[{
+      question:String,
+      is_mandatory:{
+        type:Boolean,
+        default:false
+      }
+    }]
+  },
   participants : [
     {
       first_name:String,
       last_name:String,
       email:String,
+      answers:{
+        type:[
+          {
+            _id:false,
+            question_id:mongoose.Schema.Types.ObjectId,
+            answer:{
+              type:String,
+              required:'Answer is required'
+            }
+          }],
+        default:[]
+      },
       participation_state:String
     }],
   start_time : {
@@ -67,6 +97,6 @@ eventSchema.virtual('event_state').get(function(){
     return 'completed';
 });
 
-eventSchema.statics.updatables = ['title','description','start_time','end_time','address','location','event_state','participants'];
+eventSchema.statics.updatables = ['title','event_url','description','questions','start_time','end_time','address','location','event_state','participants'];
 
 module.exports = eventSchema;

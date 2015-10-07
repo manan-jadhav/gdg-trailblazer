@@ -12,9 +12,13 @@ var Event = require('../models/event');
 var mailer = require('../mailer');
 
 router.get('/',function(request,response){
-  Event.find({},{
-    __v:false,
-  },function(err,events){
+  var projection = {
+    __v:false
+  }
+  if( ! H.hasPermission(request.authorisedUser,'events','view_responses'))
+    projection["participants.answers"] = false;
+  Event.find({},projection,
+    function(err,events){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching events',null,err));
     else
@@ -23,9 +27,13 @@ router.get('/',function(request,response){
 });
 
 router.get('/:event_id',function(request,response){
-  Event.findById(request.params.event_id,
-    {__v:false},
-  function(err,event){
+  var projection = {
+    __v:false
+  }
+  if( ! H.hasPermission(request.authorisedUser,'events','view_responses'))
+    projection["participants.answers"] = false;
+  Event.findById(request.params.event_id,projection
+  ,function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
     else if(event == null)
@@ -41,6 +49,7 @@ function(request,response){
   var event = new Event({
     title:data.title,
     description:data.description,
+    event_url:data.event_url,
     event_state:data.event_state,
     start_time:data.start_time,
     end_time:data.end_time,
@@ -101,23 +110,38 @@ function(request,response){
 router.post('/:event_id/request_participation',H.assertPermission('events','participate'),
 function(request,response){
   Event.findById(request.params.event_id,
-    {__v:false},
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
     else if(event == null)
       response.status(404).json(H.response(404,'Event not found'));
+    else if(event.participants.id(request.authorisedUser._id))
+      response.status(422).json(H.response(422,'You are already a participant'));
     else
     {
-      var user = _.pick(request.authorisedUser,'_id','first_name','last_name','email');
-      user.participation_state = 'requested';
-      event.participants.addToSet(user);
-      event.save(function(err){
-        if(err)
-          response.status(400).json(H.response(400,'Error while saving event',null,err));
-        else
-          response.status(200).json(H.response(200,'Participation request saved',user));
+      var mandatoryQuestions = _.where(event.questions,{is_mandatory:true});
+      var answers = request.body.answers;
+      var missingAnswers = [];
+      _.each(mandatoryQuestions,function(question){
+        var answer = _.findWhere(answers,{question_id:question._id.toString()});
+        if( !answer || answer == '')
+          missingAnswers.push(question);
       });
+      if(missingAnswers.length > 0)
+        response.status(422).json(H.response(422,'One or more mandatory questions are unanswered',null,missingAnswers));
+      else
+      {
+        var user = _.pick(request.authorisedUser,'_id','first_name','last_name','email');
+        user.participation_state = 'requested';
+        user.answers = answers;
+        event.participants.addToSet(user);
+        event.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,'Error while saving event',null,err));
+          else
+            response.status(200).json(H.response(200,'Participation request saved',user));
+        });
+      }
     }
   });
 });
@@ -125,7 +149,6 @@ function(request,response){
 router.post('/:event_id/accept_participation',H.assertPermission('events','moderate_participants'),
 function(request,response){
   Event.findById(request.params.event_id,
-    {__v:false},
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
@@ -167,7 +190,6 @@ function(request,response){
 router.post('/:event_id/confirm_participation',H.assertPermission('events','participate'),
 function(request,response){
   Event.findById(request.params.event_id,
-    {__v:false},
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
