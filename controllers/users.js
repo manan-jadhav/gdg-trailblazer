@@ -19,7 +19,6 @@ router.get('/',H.assertPermission('users','view'),
 function(request,response){
   User.find({},{
     __v:false,
-    email_verified_at:false,
     email_verification_code:false,
     password:false
   },function(err,users){
@@ -34,7 +33,6 @@ router.get('/:user_id',H.assertPermission('users','view'),
 function(request,response){
   User.findById(request.params.user_id,{
     __v:false,
-    email_verified_at:false,
     email_verification_code:false,
     password:false
   },function(err,user){

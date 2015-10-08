@@ -31,9 +31,8 @@ app.use(function(req,res,next){
     var header = req.get('Authorization');
     if(header)
       var token = header.split(' ')[1]; // 'Bearer access_token' format
-    else
-      next();
-  }catch(e){}
+  }
+  finally{}
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
@@ -50,6 +49,8 @@ app.use(function(req,res,next){
           });
       });
   }
+  else
+    next();
 });
 
 app.use('/users',usersController);
