@@ -197,6 +197,9 @@ function(request,response){
     if(data[field])
       updateObject[field] = data[field];
   }
+  if(H.hasPermission(request.authorisedUser,'users','manage_permissions'))
+    if(data.permissions)
+      updateObject.permissions = data.permissions;
   User.findByIdAndUpdate(request.params.user_id,{$set:updateObject},function(err, user){
     if(err)
       response.status(400).json(H.response(400,'Error while updating user',null,err));
