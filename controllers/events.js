@@ -55,10 +55,7 @@ function(request,response){
     end_time:data.end_time,
     participants:[],
     address:data.address,
-    location:{
-      latitude:data.latitude,
-      longitude:data.longitude
-    },
+    location:data.location,
     questions:data.questions,
     created_at:moment(),
     updated_at:moment()
@@ -98,13 +95,49 @@ function(request,response){
     if(data[field])
       updateObject[field] = data[field];
   }
-  Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},function(err, event){
+  Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},{runValidators:true},function(err, event){
     if(err)
-      response.status(400).json(H.response(400,'Error while updating event',null,err));
+    {
+      if(err.name == "ValidationError")
+      {
+        var errors = [];
+        for(key in err.errors)
+          errors.push({field:key,message:err.errors[key].message});
+        response.status(422).json(H.response(422,'Invalid data',null,errors));
+      }
+      else
+        response.status(400).json(H.response(400,'Error while updating event'));
+    }
     else if(event == null)
       response.status(404).json(H.response(404,'Event not found'));
     else
       response.status(200).json(H.response(200,'Event updated successfully',{_id:event._id}));
+  });
+});
+
+router.delete('/:event_id',H.assertPermission('events','update'),
+function(request,response){
+  Event.findById(request.params.event_id,
+    function(err, event){
+    if(err)
+        response.status(400).json(H.response(400,'Error while fetching event'));
+    else if(event == null)
+      response.status(404).json(H.response(404,'Event not found'));
+    else
+    {
+        if(moment().isAfter(event.start_time))
+          response.status(422).json(H.response(422,'Cannot cancel event after it has started or completed',{_id:event._id}));
+        else
+        {
+          event.updated_at = event.cancelled_at = moment();
+          event.save(function(err){
+            if(err)
+              response.status(400).json(H.response(400,'Error while updating event'));
+            else
+              response.status(200).json(H.response(200,'Event has been cancelled',{_id:event._id}));
+          });
+        }
+    }
   });
 });
 

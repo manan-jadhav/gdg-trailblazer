@@ -18,10 +18,7 @@ var eventSchema = new mongoose.Schema({
     required:'Title is required.'
   },
   description : String,
-  is_cancelled : {
-    type:Boolean,
-    default:false
-  },
+  cancelled_at : Date,
   event_url : {
     type:String,
     validate:validators.isURL({
@@ -92,10 +89,12 @@ eventSchema.set('toJSON', { virtuals: true, getters:true });
 eventSchema.set('toObject', { virtuals: true, getters:true });
 
 eventSchema.virtual('event_state').get(function(){
-  if(this.is_cancelled)
+  if(this.cancelled_at)
     return 'cancelled';
   else if( moment().isBefore(this.start_time) )
     return 'upcoming';
+  else if( moment().isAfter(this.start_time) && moment().isBefore(this.end_time) )
+    return 'started';
   else
     return 'completed';
 });
