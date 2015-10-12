@@ -40,9 +40,8 @@ var userSchema = new mongoose.Schema({
       String:[String]
     },
     default : {
-      'self': ['view','update'],
-      'users' : ['view'],
-      'events' : ['view','participate']
+      'users' : ['read'],
+      'events' : ['read','participate','view_participants']
     }
   },
   created_at : {

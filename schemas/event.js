@@ -8,7 +8,10 @@ var userSchema = require('./user');
 
 function dateFormatter(date)
 {
-  return moment(date).format();
+  if(date)
+    return moment(date).format();
+  else
+    return null;
 }
 
 // Event schema definition
@@ -18,7 +21,15 @@ var eventSchema = new mongoose.Schema({
     required:'Title is required.'
   },
   description : String,
-  cancelled_at : Date,
+  cancelled_at : {
+    type:Date,
+    get:dateFormatter,
+    validate:validators.isBefore({message:'Event cannot be cancelled after it has started'},this.start_time)
+  },
+  deleted_at : {
+    type:Date,
+    get:dateFormatter
+  },
   event_url : {
     type:String,
     validate:validators.isURL({
@@ -60,13 +71,15 @@ var eventSchema = new mongoose.Schema({
     }],
   start_time : {
     type:Date,
-    required:'Start time is required.',
-    get:dateFormatter
+    required:'Start time is required',
+    get:dateFormatter,
+    validate:validators.isAfter({message:'Start time must be after the current time'},moment())
   },
   end_time : {
     type:Date,
-    required:'End time is required.',
-    get:dateFormatter
+    required:'End time is required',
+    get:dateFormatter,
+    validate:validators.isAfter({message:'Start time must be after the start time'},this.start_time)
   },
   address: String,
   location : {

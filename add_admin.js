@@ -15,8 +15,7 @@ User.findOne({email:email},function(err,user){
   {
     user.permissions = {
       'users':['all'],
-      'events':['all'],
-      'self':['all']
+      'events':['all']
     };
     user.markModified('permissions');
     user.save(function(err,user){

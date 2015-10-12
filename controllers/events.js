@@ -11,13 +11,19 @@ var Event = require('../models/event');
 
 var mailer = require('../mailer');
 
-router.get('/',function(request,response){
+router.get('/',H.assertPermission('events','read'),
+function(request,response){
   var projection = {
     __v:false
   }
-  if( ! H.hasPermission(request.authorisedUser,'events','view_responses'))
+  if( ! H.hasPermission(request.authorisedUser,'events','view_participants'))
+    projection["participants"] = false;
+  if( ! H.hasPermission(request.authorisedUser,'events','moderate_participants'))
     projection["participants.answers"] = false;
-  Event.find({},projection,
+  var query = {deleted_at:null};
+  if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
+    query = {};
+  Event.find(query,projection,
     function(err,events){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching events',null,err));
@@ -26,14 +32,21 @@ router.get('/',function(request,response){
   });
 });
 
-router.get('/:event_id',function(request,response){
+router.get('/:event_id',H.assertPermission('events','read'),
+function(request,response){
   var projection = {
     __v:false
   }
-  if( ! H.hasPermission(request.authorisedUser,'events','view_responses'))
+  if( ! H.hasPermission(request.authorisedUser,'events','view_participants'))
     projection["participants.answers"] = false;
-  Event.findById(request.params.event_id,projection
-  ,function(err,event){
+  if( ! H.hasPermission(request.authorisedUser,'events','moderate_participants'))
+    projection["participants.answers"] = false;
+  var query = {deleted_at:null};
+  if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
+    query = {};
+  query._id = request.params.event_id;
+  Event.findOne(query,projection,
+  function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
     else if(event == null)
@@ -87,37 +100,52 @@ function(request,response){
 
 router.put('/:event_id',H.assertPermission('events','update'),
 function(request,response){
-  var data = request.body;
-  var updateObject = {updated_at:moment()};
-  for(i in Event.updatables)
-  {
-    var field = Event.updatables[i];
-    if(data[field])
-      updateObject[field] = data[field];
-  }
-  Event.findByIdAndUpdate(request.params.event_id,{$set:updateObject},{runValidators:true},function(err, event){
+  var query = {deleted_at:null};
+  if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
+    query = {};
+  query._id = request.params.event_id;
+  Event.findOne(query,function(err, event){
     if(err)
-    {
-      if(err.name == "ValidationError")
-      {
-        var errors = [];
-        for(key in err.errors)
-          errors.push({field:key,message:err.errors[key].message});
-        response.status(422).json(H.response(422,'Invalid data',null,errors));
-      }
-      else
-        response.status(400).json(H.response(400,'Error while updating event'));
-    }
+      response.status(400).json(H.response(400,'Error while fetching event'));
     else if(event == null)
       response.status(404).json(H.response(404,'Event not found'));
     else
-      response.status(200).json(H.response(200,'Event updated successfully',{_id:event._id}));
+    {
+      var data = request.body;
+      event.updated_at = moment();
+      for(i in Event.updatables)
+      {
+        var field = Event.updatables[i];
+        if(data[field])
+          event[field] = data[field];
+      }
+      event.save(function(err){
+        if(err)
+        {
+          if(err.name == "ValidationError")
+          {
+            var errors = [];
+            for(key in err.errors)
+              errors.push({field:key,message:err.errors[key].message});
+            response.status(422).json(H.response(422,'Invalid data',null,errors));
+          }
+          else
+            response.status(400).json(H.response(400,'Error while updating event'));
+        }
+        else
+          response.status(200).json(H.response(200,'Event updated successfully',{_id:event._id}));
+      });
+    }
   });
 });
 
-router.delete('/:event_id',H.assertPermission('events','update'),
+router.put('/:event_id/cancel',H.assertPermission('events','update'),
 function(request,response){
-  Event.findById(request.params.event_id,
+  var query = {deleted_at:null};
+  if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
+    query = {};
+  query._id = request.params.event_id;
+  Event.findOne(query,
     function(err, event){
     if(err)
         response.status(400).json(H.response(400,'Error while fetching event'));
@@ -125,25 +153,115 @@ function(request,response){
       response.status(404).json(H.response(404,'Event not found'));
     else
     {
-        if(moment().isAfter(event.start_time))
-          response.status(422).json(H.response(422,'Cannot cancel event after it has started or completed',{_id:event._id}));
-        else
-        {
-          event.updated_at = event.cancelled_at = moment();
-          event.save(function(err){
-            if(err)
-              response.status(400).json(H.response(400,'Error while updating event'));
-            else
-              response.status(200).json(H.response(200,'Event has been cancelled',{_id:event._id}));
-          });
-        }
+        event.updated_at = event.cancelled_at = moment();
+        event.save(function(err){
+          if(err && err.name == "ValidationError")
+          {
+            var errors = [];
+            for(key in err.errors)
+              errors.push({field:key,message:err.errors[key].message});
+            response.status(422).json(H.response(422,'Invalid data',null,errors));
+          }
+          else if(err)
+            response.status(400).json(H.response(400,'Error while updating event'));
+          else
+            response.status(200).json(H.response(200,'Event has been cancelled',{_id:event._id}));
+        });
+    }
+  });
+});
+
+router.put('/:event_id/revert_cancel',H.assertPermission('events','update'),
+function(request,response){
+  var query = {deleted_at:null};
+  if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
+    query = {};
+  query._id = request.params.event_id;
+  Event.findOne(query,
+    function(err, event){
+    if(err)
+        response.status(400).json(H.response(400,'Error while fetching event'));
+    else if(event == null)
+      response.status(404).json(H.response(404,'Event not found'));
+    else if(!event.cancelled_at)
+      response.status(200).json(H.response(200,'Event was not cancelled'));
+    else
+    {
+        event.updated_at = moment();
+        event.cancelled_at = undefined;
+        event.save(function(err){
+          if(err && err.name == "ValidationError")
+          {
+            var errors = [];
+            for(key in err.errors)
+              errors.push({field:key,message:err.errors[key].message});
+            response.status(422).json(H.response(422,'Invalid data',null,errors));
+          }
+          else if(err)
+            response.status(400).json(H.response(400,'Error while updating event'));
+          else
+            response.status(200).json(H.response(200,'Event has been restored',{_id:event._id}));
+        });
+    }
+  });
+});
+
+
+router.delete('/:event_id',H.assertPermission('events','update'),
+function(request,response){
+  var query = {deleted_at:null};
+  if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
+    query = {};
+  query._id = request.params.event_id;
+  Event.findOne(query,
+    function(err, event){
+    if(err)
+        response.status(400).json(H.response(400,'Error while fetching event'));
+    else if(event == null)
+      response.status(404).json(H.response(404,'Event not found'));
+    else
+    {
+        event.deleted_at = moment();
+        event.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,'Error while deleting event'));
+          else
+            response.status(200).json(H.response(200,'Event has been deleted',{_id:event._id}));
+        });
+    }
+  });
+});
+
+router.put('/:event_id/restore',H.assertPermission('events','restore'),
+function(request,response){
+  Event.findById(request.params.event_id,
+    function(err, event){
+    if(err)
+        response.status(400).json(H.response(400,'Error while fetching event'));
+    else if(event == null)
+      response.status(404).json(H.response(404,'Event not found'));
+    else if(!event.deleted_at)
+      response.status(200).json(H.response(200,'Event is not deleted'));
+    else
+    {
+        event.deleted_at = null;
+        event.save(function(err){
+          if(err)
+            response.status(400).json(H.response(400,'Error while updating event'));
+          else
+            response.status(200).json(H.response(200,'Event has been restored',{_id:event._id}));
+        });
     }
   });
 });
 
 router.post('/:event_id/request_participation',H.assertPermission('events','participate'),
 function(request,response){
-  Event.findById(request.params.event_id,
+  var query = {
+    deleted_at:null,
+    _id:request.params.event_id
+  };
+  Event.findOne(query,
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
@@ -182,7 +300,11 @@ function(request,response){
 
 router.post('/:event_id/accept_participation',H.assertPermission('events','moderate_participants'),
 function(request,response){
-  Event.findById(request.params.event_id,
+  var query = {
+    deleted_at:null,
+    _id:request.params.event_id
+  };
+  Event.findOne(query,
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
@@ -223,7 +345,11 @@ function(request,response){
 
 router.post('/:event_id/confirm_participation',H.assertPermission('events','participate'),
 function(request,response){
-  Event.findById(request.params.event_id,
+  var query = {
+    deleted_at:null,
+    _id:request.params.event_id
+  };
+  Event.findOne(query,
   function(err,event){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching event',null,err));

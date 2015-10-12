@@ -6,6 +6,7 @@ var jwt = require('jsonwebtoken');
 var db = require('./db');// Call the Database connection instantiation code for once
 
 var H = require('./helpers');
+var _ = require('underscore');
 
 var User = require('./models/user');
 
@@ -43,14 +44,21 @@ app.use(function(req,res,next){
         else
           User.findById(decoded._id,function(err,user){
             if(! err)
+            {
               req.authorisedUser = user;
-            req.tokenErrors = false;
-            next();
+              next();
+            }
+            else
+              res.status(400).json(H.response(400,'Access token is invalid.'));
           });
       });
   }
-  else
+  else if(req.method == 'POST' && _.contains(['/users/','/users/authenticate','/users/verify_email'],req.path))
     next();
+  else if(req.method == 'OPTIONS')
+    res.end();
+  else
+    res.status(400).json(H.response(400,'Access token is required.'));
 });
 
 app.use('/users',usersController);

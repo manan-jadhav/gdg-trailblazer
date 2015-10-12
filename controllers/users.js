@@ -15,7 +15,7 @@ var User = require('../models/user');
 var mailer = require('../mailer');
 
 
-router.get('/',H.assertPermission('users','view'),
+router.get('/',H.assertPermission('users','read'),
 function(request,response){
   User.find({},{
     __v:false,
@@ -29,7 +29,7 @@ function(request,response){
   });
 });
 
-router.get('/:user_id',H.assertPermission('users','view'),
+router.get('/:user_id',H.assertPermission('users','read'),
 function(request,response){
   User.findById(request.params.user_id,{
     __v:false,
@@ -45,63 +45,6 @@ function(request,response){
   });
 });
 
-router.put('/:user_id/grant_permissions',H.assertPermission('users','manage_permissions'),
-function(request,response){
-  User.findById(request.params.user_id,
-    function(err,user){
-      if(err)
-        response.status(400).json(H.response(400,'Error while fetching users',null,err));
-      else if(user == null)
-        response.status(404).json(H.response(404,'User not found'));
-      else
-      {
-        var newPermissions = request.body;
-        var contexts = _.keys(newPermissions);
-        _.each(contexts,function(context){
-          if( ! _.contains(user.permissions[context],newPermissions[context]) )
-            user.permissions[context] = _.union(user.permissions[context],newPermissions[context]);
-        });
-        user.markModified('permissions');
-        user.updated_at = moment();
-        user.save(function(err){
-          if(err)
-            response.status(400).json(H.response(400,'Error while saving user',null,err));
-          else
-            response.status(200).json(H.response(200,'Permissions granted',{_id:user._id}));
-        });
-      }
-    });
-});
-
-
-router.put('/:user_id/revoke_permissions',H.assertPermission('users','manage_permissions'),
-function(request,response){
-  User.findById(request.params.user_id,
-    function(err,user){
-      if(err)
-        response.status(400).json(H.response(400,'Error while fetching users',null,err));
-      else if(user == null)
-        response.status(404).json(H.response(404,'User not found'));
-      else
-      {
-        var revokedPermissions = request.body;
-        var contexts = _.keys(revokedPermissions);
-        _.each(contexts,function(context){
-            user.permissions[context] = _.difference(user.permissions[context],revokedPermissions[context]);
-        });
-        user.markModified('permissions');
-        user.updated_at = moment();
-        user.save(function(err){
-          if(err)
-            response.status(400).json(H.response(400,'Error while saving user',null,err));
-          else
-            response.status(200).json(H.response(200,'Permissions revoked',{_id:user._id}));
-        });
-      }
-    });
-});
-
-
 router.post('/',function(request,response){
   // This endpoint is public
     var data = request.body;
@@ -112,6 +55,7 @@ router.post('/',function(request,response){
       mobile : data.mobile,
       timezone : data.timezone,
       city : data.city,
+      technologies:data.technologies,
       email_verified_at:null,
       email_verification_code: parseInt(crypto.randomBytes(2).toString('hex'),16),
       created_at:moment(),
@@ -169,7 +113,7 @@ router.post('/',function(request,response){
     });
 })
 
-router.put('/',H.assertPermission('self','update'),
+router.put('/',
 function(request,response){
   var data = request.body;
   var updateObject = {updated_at:moment()};

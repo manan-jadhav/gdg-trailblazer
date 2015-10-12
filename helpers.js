@@ -26,8 +26,7 @@ module.exports = {
     return user && (_.contains(user.permissions[context], permission) || _.contains(user.permissions[context], 'all'));
   },
   allPermissions : {
-    users:['view','update','manage_permissions'],
-    events:['view','update','create','view_responses','participate','moderate_participants'],
-    self:['view','update']
+    users:['read','update','manage_permissions'],
+    events:['read','update','create','delete','restore','read_deleted','participate','view_participants','moderate_participants']
   }
 };
