@@ -27,6 +27,6 @@ module.exports = {
   },
   allPermissions : {
     users:['read','update','manage_permissions'],
-    events:['read','update','create','delete','restore','read_deleted','participate','view_participants','moderate_participants']
+    events:['read','update','create','delete','restore','read_deleted','view_participants','moderate_participants']
   }
 };

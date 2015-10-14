@@ -255,7 +255,7 @@ function(request,response){
   });
 });
 
-router.post('/:event_id/request_participation',H.assertPermission('events','participate'),
+router.post('/:event_id/request_participation',H.assertPermission('events','read'),
 function(request,response){
   var query = {
     deleted_at:null,
@@ -342,6 +342,52 @@ function(request,response){
     }
   });
 });
+
+router.post('/:event_id/decline_participation',H.assertPermission('events','moderate_participants'),
+function(request,response){
+  var query = {
+    deleted_at:null,
+    _id:request.params.event_id
+  };
+  Event.findOne(query,
+  function(err,event){
+    if(err)
+      response.status(400).json(H.response(400,'Error while fetching event',null,err));
+    else if(event == null)
+      response.status(404).json(H.response(404,'Event not found'));
+    else
+    {
+      var participant = event.participants.id(request.query._id)
+      if(participant && participant.participation_state == 'requested')
+      {
+        participant.participation_state = 'declined';
+        event.save(function(err,event){
+          if(err)
+            response.status(400).json(H.response(400,'Error while saving event',null,err));
+          else
+          {
+            response.status(200).json(H.response(200,'Participant declined',participant)).end();
+            var data = {user:participant,config:config,event:event};
+            if(config.mail.sendAcceptedEmail)
+              mailer.send({
+                from : config.mail.from,
+                to : participant.email,
+                subject : jade.renderFile('emails/events/declined/subject.jade',data),
+                html : jade.renderFile('emails/events/declined/html.jade',data),
+                text : jade.renderFile('emails/events/declined/text.jade',data)
+              },function(err,message){
+                if(err)
+                  console.log('Error while sending decline email : \n',err)
+              });
+          }
+        });
+      }
+      else
+        response.status(404).json(H.response(404,'Participant not found'));
+    }
+  });
+});
+
 
 router.post('/:event_id/confirm_participation',H.assertPermission('events','participate'),
 function(request,response){
