@@ -21,6 +21,12 @@ module.exports = {
         response.status(403).json(H.response(403,'You do not have the permission to do this action'));
     };
   },
+  assertAuthorised : function() {
+      return function (request,response,next) {
+          if(request.authorisedUser) next();
+          else response.status(403).json(H.response(403,'You do not have the permission to do this action'));
+      }
+  },
   hasPermission : function(user,context,permission)
   {
     return user && (_.contains(user.permissions[context], permission) || _.contains(user.permissions[context], 'all'));

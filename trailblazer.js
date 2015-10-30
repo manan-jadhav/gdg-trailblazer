@@ -34,11 +34,6 @@ app.use(function(req,res,next){
       var token = header.split(' ')[1]; // 'Bearer access_token' format
   }
   finally{}
-  var noAuthEndpoints = [
-                    '/users','/users/',
-                    '/users/authenticate','/users/authenticate/',
-                    '/users/verify_email','/users/verify_email/'
-                ];
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
@@ -57,13 +52,9 @@ app.use(function(req,res,next){
               res.status(400).json(H.response(400,'Access token is invalid.'));
           });
       });
+  } else {
+      next();
   }
-  else if(req.method == 'POST' && _.contains(noAuthEndpoints,req.path))
-    next();
-  else if(req.method == 'OPTIONS')
-    res.end();
-  else
-    res.status(400).json(H.response(400,'Access token is required.'));
 });
 
 app.use('/users',usersController);

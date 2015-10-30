@@ -11,15 +11,16 @@ var Event = require('../models/event');
 
 var mailer = require('../mailer');
 
-router.get('/',H.assertPermission('events','read'),
+router.get('/',/*H.assertPermission('events','read'),*/
 function(request,response){
   var projection = {
     __v:false
   }
   if( ! H.hasPermission(request.authorisedUser,'events','view_participants'))
     projection["participants"] = false;
-  if( ! H.hasPermission(request.authorisedUser,'events','moderate_participants'))
+  else if( ! H.hasPermission(request.authorisedUser,'events','moderate_participants'))
     projection["participants.answers"] = false;
+
   var query = {deleted_at:null};
   if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
     query = {};
@@ -32,7 +33,7 @@ function(request,response){
   });
 });
 
-router.get('/:event_id',H.assertPermission('events','read'),
+router.get('/:event_id',/*H.assertPermission('events','read'),*/
 function(request,response){
   var projection = {
     __v:false

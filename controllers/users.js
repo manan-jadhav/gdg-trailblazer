@@ -113,43 +113,93 @@ router.post('/',function(request,response){
     });
 })
 
-router.put('/',
-function(request,response){
+router.put('/',H.assertAuthorised(),function(request,response){
   var data = request.body;
-  var updateObject = {updated_at:moment()};
-  for(i in User.userUpdatables)
-  {
-    var field = User.userUpdatables[i];
-    if(data[field])
-      updateObject[field] = data[field];
-  }
-  User.findByIdAndUpdate(request.authorisedUser._id,{$set:updateObject},function(err, user){
+  User.findById(request.authorisedUser._id,{
+    __v:false,
+    email_verification_code:false,
+    password:false
+  },function(err,user){
     if(err)
-      response.status(400).json(H.response(400,'Error while updating user',null,err));
-    else
-      response.status(200).json(H.response(200,'User updated successfully',{_id:user._id}));
+      response.status(400).json(H.response(400,'Error while fetching users',null,err));
+    else if(user == null)
+      response.status(404).json(H.response(404,'User not found'));
+    else {
+        for(i in User.userUpdatables)
+        {
+          var field = User.userUpdatables[i];
+          if(data[field])
+            user[field] = data[field];
+        }
+        if( ! (data.password && data.password.length > 5) ){
+          response.status(422).json(H.response(422,'Invalid data',null,[
+              {field:'password',message:'Password must be larger than 5 characters.'}]));
+        } else {
+            user.password = bcrypt.hashSync(data.password,8);
+            user.save(function(err){
+              if(err)
+              {
+                if(err.name == "ValidationError")
+                {
+                  var errors = [];
+                  for(key in err.errors)
+                    errors.push({field:key,message:err.errors[key].message});
+                  response.status(422).json(H.response(422,'Invalid data',null,errors));
+                }
+                else
+                  response.status(400).json(H.response(400,'Error while updating user'));
+              }
+              else
+                response.status(200).json(H.response(200,'User updated successfully',{_id:user._id}));
+            });
+        }
+    }
   });
 });
 
 router.put('/:user_id',H.assertPermission('users','update'),
 function(request,response){
-  var data = request.body;
-  var updateObject = {updated_at:moment()};
-  for(i in User.userUpdatables)
-  {
-    var field = User.userUpdatables[i];
-    if(data[field])
-      updateObject[field] = data[field];
-  }
-  if(H.hasPermission(request.authorisedUser,'users','manage_permissions'))
-    if(data.permissions)
-      updateObject.permissions = data.permissions;
-  User.findByIdAndUpdate(request.params.user_id,{$set:updateObject},function(err, user){
-    if(err)
-      response.status(400).json(H.response(400,'Error while updating user',null,err));
-    else
-      response.status(200).json(H.response(200,'User updated successfully',{_id:user._id}));
-  });
+    var data = request.body;
+    User.findById(request.params.user_id,{
+      __v:false,
+      email_verification_code:false,
+      password:false
+    },function(err,user){
+      if(err)
+        response.status(400).json(H.response(400,'Error while fetching users',null,err));
+      else if(user == null)
+        response.status(404).json(H.response(404,'User not found'));
+      else {
+          for(i in User.userUpdatables)
+          {
+            var field = User.userUpdatables[i];
+            if(data[field])
+              user[field] = data[field];
+          }
+          if( ! (data.password && data.password.length > 5) ){
+            response.status(422).json(H.response(422,'Invalid data',null,[
+                {field:'password',message:'Password must be larger than 5 characters.'}]));
+          } else {
+              user.password = bcrypt.hashSync(data.password,8);
+              user.save(function(err){
+                if(err)
+                {
+                  if(err.name == "ValidationError")
+                  {
+                    var errors = [];
+                    for(key in err.errors)
+                      errors.push({field:key,message:err.errors[key].message});
+                    response.status(422).json(H.response(422,'Invalid data',null,errors));
+                  }
+                  else
+                    response.status(400).json(H.response(400,'Error while updating user'));
+                }
+                else
+                  response.status(200).json(H.response(200,'User updated successfully',{_id:user._id}));
+              });
+          }
+      }
+    });
 });
 
 router.post('/verify_email',function(request,response){
