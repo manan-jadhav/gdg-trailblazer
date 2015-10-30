@@ -60,6 +60,10 @@ var userSchema = new mongoose.Schema({
       return moment(date).format();
     }
   },
+  reset_password : {
+      code : String,
+      expires_at:Date
+  },
   email_verification_code:{
     type:String,
     required:true

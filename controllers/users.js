@@ -20,6 +20,7 @@ function(request,response){
   User.find({},{
     __v:false,
     email_verification_code:false,
+    reset_password:false,
     password:false
   },function(err,users){
     if(err)
@@ -34,6 +35,7 @@ function(request,response){
   User.findById(request.params.user_id,{
     __v:false,
     email_verification_code:false,
+    reset_password:false,
     password:false
   },function(err,user){
     if(err)
@@ -136,6 +138,7 @@ router.put('/',H.assertAuthorised(),function(request,response){
               {field:'password',message:'Password must be larger than 5 characters.'}]));
         } else {
             user.password = bcrypt.hashSync(data.password,8);
+            user.updated_at = moment();
             user.save(function(err){
               if(err)
               {
@@ -181,6 +184,7 @@ function(request,response){
                 {field:'password',message:'Password must be larger than 5 characters.'}]));
           } else {
               user.password = bcrypt.hashSync(data.password,8);
+              user.updated_at = moment();
               user.save(function(err){
                 if(err)
                 {
@@ -200,6 +204,60 @@ function(request,response){
           }
       }
     });
+});
+
+router.post('/forgot_password',function(request,response){
+  // This endpoint is public
+  User.findOne({email:request.body.email},function(err, user){
+    if(err)
+      response.status(400).json(H.response(400,'Error while finding user',null,err));
+    else if(user == null)
+      response.status(404).json(H.response(404,'User not found'))
+    else{
+      user.reset_password = {
+          code : parseInt(crypto.randomBytes(2).toString('hex'),16),
+          expires_at : moment().add(1,'days')
+      };
+      user.updated_at = moment();
+      user.save(function(err,user){
+        if(err)
+          response.status(400).json(H.response(400,'Error while updating user',null,err));
+        else
+          response.status(200).json(H.response(200,'Reset password instructions sent',{_id:user._id}));
+      });
+    }
+  });
+});
+
+router.post('/reset_password',function(request,response){
+  // This endpoint is public
+  User.findOne({email:request.body.email},function(err, user){
+    if(err)
+      response.status(400).json(H.response(400,'Error while finding user',null,err));
+    else if(user == null)
+      response.status(404).json(H.response(404,'User not found'))
+    else if( !user.reset_password || moment().isAfter(user.reset_password.expires_at))
+        response.status(400).json(H.response(400,'Code is expired or invalid'));
+    else if( !user.reset_password || request.body.reset_code != user.reset_password.code)
+        response.status(400).json(H.response(400,'Code is expired or invalid'));
+    else{
+        var data = request.body;
+        if( ! (data.password && data.password.length > 5) ){
+          response.status(422).json(H.response(422,'Invalid data',null,[
+              {field:'password',message:'Password must be larger than 5 characters.'}]));
+        } else {
+            user.password = bcrypt.hashSync(data.password,8);
+            user.reset_password = {};
+            user.updated_at = moment();
+            user.save(function(err,user){
+            if(err)
+              response.status(400).json(H.response(400,'Error while updating user',null,err));
+            else
+              response.status(200).json(H.response(200,'Password reset successfully.',{_id:user._id}));
+            });
+        }
+    }
+  });
 });
 
 router.post('/verify_email',function(request,response){
