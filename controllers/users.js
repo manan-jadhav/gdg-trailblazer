@@ -225,6 +225,19 @@ router.post('/forgot_password',function(request,response){
         else
           response.status(200).json(H.response(200,'Reset password instructions sent',{_id:user._id}));
       });
+      mailer.send({
+        from : config.mail.from,
+        to : user.email,
+        subject : jade.renderFile('emails/users/resetPassword/subject.jade',
+          {user:user,config:config,resetCode:user.reset_password.code}),
+        html : jade.renderFile('emails/users/resetPassword/html.jade',
+          {user:user,config:config,resetCode:user.reset_password.code}),
+        text : jade.renderFile('emails/users/resetPassword/text.jade',
+        {user:user,config:config,resetCode:user.reset_password.code})
+      },function(err,message){
+        if(err)
+          console.log('Error while sending verification email : \n',err)
+      });
     }
   });
 });
@@ -247,7 +260,7 @@ router.post('/reset_password',function(request,response){
               {field:'password',message:'Password must be larger than 5 characters.'}]));
         } else {
             user.password = bcrypt.hashSync(data.password,8);
-            user.reset_password = {};
+            user.reset_password = null;
             user.updated_at = moment();
             user.save(function(err,user){
             if(err)
