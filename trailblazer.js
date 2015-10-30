@@ -34,6 +34,11 @@ app.use(function(req,res,next){
       var token = header.split(' ')[1]; // 'Bearer access_token' format
   }
   finally{}
+  var noAuthEndpoints = [
+                    '/users','/users/',
+                    '/users/authenticate','/users/authenticate/',
+                    '/users/verify_email','/users/verify_email/'
+                ];
   if(token)
   {
       jwt.verify(token,appConfig.secret,function(err,decoded){
@@ -53,7 +58,7 @@ app.use(function(req,res,next){
           });
       });
   }
-  else if(req.method == 'POST' && _.contains(['/users/','/users/authenticate','/users/verify_email'],req.path))
+  else if(req.method == 'POST' && _.contains(noAuthEndpoints,req.path))
     next();
   else if(req.method == 'OPTIONS')
     res.end();
