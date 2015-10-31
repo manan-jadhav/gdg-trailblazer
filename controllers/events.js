@@ -24,7 +24,7 @@ function(request,response){
   var query = {deleted_at:null};
   if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
     query = {};
-  Event.find(query,projection,
+  Event.find(query,projection,{sort:{start_time:-1}},
     function(err,events){
     if(err)
       response.status(400).json(H.response(400,'Error while fetching events',null,err));
@@ -38,10 +38,6 @@ function(request,response){
   var projection = {
     __v:false
   }
-  if( ! H.hasPermission(request.authorisedUser,'events','view_participants'))
-    projection["participants.answers"] = false;
-  if( ! H.hasPermission(request.authorisedUser,'events','moderate_participants'))
-    projection["participants.answers"] = false;
   var query = {deleted_at:null};
   if( H.hasPermission(request.authorisedUser,'events','read_deleted'))
     query = {};
@@ -52,8 +48,26 @@ function(request,response){
       response.status(400).json(H.response(400,'Error while fetching event',null,err));
     else if(event == null)
       response.status(404).json(H.response(404,'Event not found',null,err));
-    else
-      response.status(200).json(H.response(200,'Success',event));
+    else{
+        var raw = event;
+        var event = event.toObject();
+        var user = request.authorisedUser;
+        if(!user){
+            event['participation_state'] = 'not participated';
+        } else {
+            var participant = raw.participants.id(user._id);
+            if(participant) {
+                event['participation_state'] = participant.participation_state;
+            } else {
+                event['participation_state'] = 'not participated';
+            }
+        }
+        if( ! H.hasPermission(request.authorisedUser,'events','view_participants'))
+          delete event.participants;
+        else if( ! H.hasPermission(request.authorisedUser,'events','moderate_participants'))
+            _.each(event.participants, function(p){delete p.answers;});
+        response.status(200).json(H.response(200,'Success',event));
+    }
   });
 });
 
@@ -277,9 +291,10 @@ function(request,response){
       var missingAnswers = [];
       _.each(mandatoryQuestions,function(question){
         var answer = _.findWhere(answers,{question_id:question._id.toString()});
-        if( !answer || answer == '')
+        if( !answer || answer.answer == '')
           missingAnswers.push(question);
       });
+      console.log(missingAnswers);
       if(missingAnswers.length > 0)
         response.status(422).json(H.response(422,'One or more mandatory questions are unanswered',null,missingAnswers));
       else
@@ -390,7 +405,7 @@ function(request,response){
 });
 
 
-router.post('/:event_id/confirm_participation',H.assertPermission('events','participate'),
+router.post('/:event_id/confirm_participation',H.assertAuthorised(),
 function(request,response){
   var query = {
     deleted_at:null,
